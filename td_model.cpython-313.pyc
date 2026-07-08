@@ -1,0 +1,106 @@
+from services.playing_time import apply_playing_time
+
+def projection_range(expected, position=""):
+    position = (position or "").upper()
+    volatility = {
+        "QB": 0.10,
+        "RB": 0.18,
+        "WR": 0.22,
+        "TE": 0.20,
+    }.get(position, 0.18)
+
+    return round(expected * (1 - volatility), 1), round(expected * (1 + volatility), 1)
+
+
+def confidence_score(games_used=0, role="unknown", injury_status="Healthy"):
+    score = 40 + min(games_used, 8) * 6
+
+    if role == "starter":
+        score += 15
+    elif role in {"backup_qb", "reserve_qb", "reserve", "inactive"}:
+        score -= 25
+    elif role == "rotation":
+        score -= 5
+
+    if injury_status == "Questionable":
+        score -= 10
+    elif injury_status == "Doubtful":
+        score -= 25
+    elif injury_status == "Out":
+        score = 5
+
+    return max(5, min(95, int(score)))
+
+
+def boom_bust(projection):
+    fp = projection.get("fantasy_points_ppr", 0)
+    conf = projection.get("v93_confidence", projection.get("confidence", 50))
+    td = projection.get("td_probability", 0)
+
+    boom = min(90, int(fp * 2 + td * 0.35))
+    bust = max(5, int(45 - conf * 0.35))
+
+    if projection.get("role") in {"backup_qb", "reserve_qb", "inactive"}:
+        boom = min(boom, 3)
+        bust = 95
+
+    return boom, bust
+
+
+def explain(player, projection, recent_form=None):
+    recent_form = recent_form or {}
+    reasons = []
+
+    role = projection.get("role", "unknown")
+    reasons.append(f"Role adjustment: {role}")
+
+    mult = projection.get("playing_time_multiplier")
+    if mult is not None:
+        reasons.append(f"Playing-time multiplier: {mult}")
+
+    games = recent_form.get("games_used", 0)
+    reasons.append(f"Recent games used: {games}")
+
+    if projection.get("td_probability") is not None:
+        reasons.append(f"TD probability: {projection.get('td_probability')}%")
+
+    if projection.get("v93_floor") is not None and projection.get("v93_ceiling") is not None:
+        reasons.append(f"Expected range: {projection['v93_floor']} to {projection['v93_ceiling']}")
+
+    return reasons
+
+
+def upgrade_projection(player, projection, recent_form=None, depth_rank=None, is_active=True, injury_status="Healthy"):
+    position = player.get("position", "")
+    projection = apply_playing_time(projection, position, depth_rank=depth_rank, is_active=is_active)
+
+    main_expected = max(
+        projection.get("passing_yards", 0),
+        projection.get("rushing_yards", 0),
+        projection.get("receiving_yards", 0),
+    )
+
+    floor, ceiling = projection_range(main_expected, position)
+    projection["v93_floor"] = floor
+    projection["v93_ceiling"] = ceiling
+
+    projection["v93_confidence"] = confidence_score(
+        games_used=(recent_form or {}).get("games_used", 0),
+        role=projection.get("role", "unknown"),
+        injury_status=injury_status,
+    )
+
+    boom, bust = boom_bust(projection)
+    projection["v93_boom_probability"] = boom
+    projection["v93_bust_probability"] = bust
+
+    if projection.get("role") in {"backup_qb", "reserve_qb", "inactive"}:
+        projection["boom_bust"] = "Bust Risk"
+    elif boom >= 45:
+        projection["boom_bust"] = "Boom"
+    else:
+        projection["boom_bust"] = "Stable"
+
+    projection["v93_explanation"] = explain(player, projection, recent_form)
+
+    return projection

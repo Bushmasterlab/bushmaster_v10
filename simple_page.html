@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% set title = "Betting Edges" %}
+{% block content %}
+<section class="panel">
+    <div class="panel-head"><h3>Top Betting Edges</h3><a>{{ result.home_code }} at {{ result.away_code }}</a></div>
+    <table>
+        <thead><tr><th>Player</th><th>Team</th><th>Prop</th><th>Projection</th><th>Edge</th><th>Confidence</th></tr></thead>
+        <tbody>
+        {% for p in result.top_props %}
+            <tr><td>{{ p.player }}</td><td>{{ p.team }}</td><td>{{ p.prop }}</td><td class="green">{{ p.value }}</td><td class="green">+{{ p.edge }}</td><td>★★★★☆</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

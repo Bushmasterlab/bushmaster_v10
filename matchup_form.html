@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>BushMaster NFL Predictor V10</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="shield">BM</div>
+            <div>
+                <h1>BUSHMASTER</h1>
+                <p>NFL PREDICTOR V10</p>
+            </div>
+        </div>
+        {% include "sidebar_nav.html" %}
+        <div class="source-card">
+            <h3>Data & Roster Source</h3>
+            <p>Roster: {{ result.roster_source }}</p>
+            <p>Stats: NFLVerse {{ result.stats_source_season }}</p>
+            <p>Updated: {{ result.updated }}</p>
+            <span class="live-dot"></span> Live
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <h2>Welcome to BushMaster</h2>
+                <p>Your NFL prediction and analytics engine.</p>
+            </div>
+            <div class="top-actions">
+                <span class="season-pill">2026 Ready</span>
+                <span class="data-pill">● Data Live</span>
+            </div>
+        </header>
+
+        <section class="hero">
+            <img src="{{ url_for('static', filename='images/bushmaster_hero.jpeg') }}" alt="BushMaster hero">
+            <div class="hero-overlay"></div>
+            <div class="hero-text">
+                <h2>REAL DATA.<br>SMARTER PICKS.<br>MORE WINS.</h2>
+                <p>Advanced NFL predictions powered by roster and player prop data.</p>
+            </div>
+            <div class="hero-badges">
+                <div><span>Roster Source</span><strong>{{ result.roster_source }}</strong></div>
+                <div><span>Stats Source</span><strong>NFLVerse {{ result.stats_source_season }}</strong></div>
+                <div><span>Last Updated</span><strong>{{ result.updated }}</strong></div>
+            </div>
+        </section>
+
+        {% include "matchup_form.html" %}
+
+        <section class="game-strip">
+            <div class="game-card"><b>{{ result.home_code }}</b><span>AT</span><b>{{ result.away_code }}</b><small>Projected {{ result.home_score }} - {{ result.away_score }}</small></div>
+            <div class="game-card"><b>Props</b><span>{{ result.top_props|length }}</span><small>Top player edges loaded</small></div>
+            <div class="game-card"><b>TD Leaders</b><span>{{ result.best_td|length }}</span><small>Anytime TD board ready</small></div>
+            <div class="game-card"><b>Model</b><span>V10</span><small>Tabs enabled</small></div>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="panel wide">
+                <div class="panel-head"><h3>Top Player Prop Predictions</h3><a href="/player-props">View All Props →</a></div>
+                <table>
+                    <thead><tr><th>Player</th><th>Team</th><th>Prop</th><th>BushMaster Proj</th><th>Edge</th><th>Pass TD</th><th>Rush TD</th><th>Rec TD</th><th>Best TD</th><th>Confidence</th></tr></thead>
+                    <tbody>
+                    {% for p in result.top_props %}
+                        <tr>
+                            <td>{{ p.player }}</td>
+                            <td>{{ p.team }}</td>
+                            <td>{{ p.prop }}</td>
+                            <td class="green">{{ p.value }}</td>
+                            <td class="green">+{{ p.edge }}</td>
+                            <td><span class="td-pill {% if p.passing_td_percentage >= 50 %}td-high{% elif p.passing_td_percentage >= 25 %}td-mid{% else %}td-low{% endif %}">{{ p.passing_td_percentage }}%</span></td>
+                            <td><span class="td-pill {% if p.rushing_td_percentage >= 50 %}td-high{% elif p.rushing_td_percentage >= 25 %}td-mid{% else %}td-low{% endif %}">{{ p.rushing_td_percentage }}%</span></td>
+                            <td><span class="td-pill {% if p.receiving_td_percentage >= 50 %}td-high{% elif p.receiving_td_percentage >= 25 %}td-mid{% else %}td-low{% endif %}">{{ p.receiving_td_percentage }}%</span></td>
+                            <td><span class="td-pill {% if p.td_chance >= 50 %}td-high{% elif p.td_chance >= 25 %}td-mid{% else %}td-low{% endif %}">{{ p.td_chance }}%</span></td>
+                            <td>{{ p.confidence }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="panel">
+                <div class="panel-head"><h3>Rushing Touchdown Leaders</h3><a href="/rb-props">View All →</a></div>
+                <ol class="leader-list">
+                {% for p in result.best_td %}
+                    <li><span>{{ p.name }}</span><b>{{ p.td_chance }}%</b></li>
+                {% endfor %}
+                </ol>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% set title = title or "Player Props" %}
+{% block content %}
+
+<section class="panel">
+    <div class="panel-head">
+        <h3>{{ title }}</h3>
+        <a>{{ result.home_code }} at {{ result.away_code }}</a>
+    </div>
+
+    <table class="props-table">
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Team</th>
+                <th>Pos</th>
+                <th>Projection</th>
+                <th>Pass TD</th>
+                <th>Rush TD</th>
+                <th>Rec TD</th>
+                <th>Best TD</th>
+                <th>Confidence</th>
+                <th>Edge</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in result.props %}
+            {% set player_pos = p.position|default(p.pos|default("")) %}
+            {% if not position or player_pos == position %}
+            <tr>
+                <td><b>{{ p.name|default(p.player|default("Unknown")) }}</b></td>
+                <td>{{ p.team|default("") }}</td>
+                <td>{{ player_pos }}</td>
+                <td>
+                    {{ p.market|default(p.prop|default("")) }}
+                    <b>{{ p.projection|default(p.bushmaster_proj|default(p.proj|default(""))) }}</b>
+                </td>
+                <td><span class="td-pill {% if p.passing_td_percentage|default(0) >= 50 %}td-high{% elif p.passing_td_percentage|default(0) >= 25 %}td-mid{% else %}td-low{% endif %}">{{ p.passing_td_percentage|default(0) }}%</span></td>
+                <td><span class="td-pill {% if p.rushing_td_percentage|default(0) >= 50 %}td-high{% elif p.rushing_td_percentage|default(0) >= 25 %}td-mid{% else %}td-low{% endif %}">{{ p.rushing_td_percentage|default(0) }}%</span></td>
+                <td><span class="td-pill {% if p.receiving_td_percentage|default(0) >= 50 %}td-high{% elif p.receiving_td_percentage|default(0) >= 25 %}td-mid{% else %}td-low{% endif %}">{{ p.receiving_td_percentage|default(0) }}%</span></td>
+                <td><span class="td-pill {% if p.td_chance|default(0) >= 50 %}td-high{% elif p.td_chance|default(0) >= 25 %}td-mid{% else %}td-low{% endif %}">{{ p.td_chance|default(0) }}%</span></td>
+                <td>{{ p.confidence|default(p.confidence_stars|default("")) }}</td>
+                <td>{{ p.edge|default("") }}</td>
+            </tr>
+            {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if not result.props %}
+    <p class="warning">No props loaded for this matchup.</p>
+    {% endif %}
+</section>
+
+{% endblock %}

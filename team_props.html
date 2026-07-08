@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% set title = "Games" %}
+{% block content %}
+<section class="game-strip">
+    <div class="game-card"><b>{{ result.home_code }}</b><span>AT</span><b>{{ result.away_code }}</b><small>{{ result.home_score }} - {{ result.away_score }}</small></div>
+    <div class="game-card"><b>Win%</b><span>{{ result.home_code }}</span><b>{{ result.home_win }}%</b><small>{{ result.away_code }} {{ result.away_win }}%</small></div>
+    <div class="game-card"><b>TDs</b><span>{{ result.home_code }}</span><b>{{ result.home_tds }}</b><small>{{ result.away_code }} {{ result.away_tds }}</small></div>
+    <div class="game-card"><b>Total</b><span>Pts</span><b>{{ result.home_score + result.away_score }}</b><small>Projected</small></div>
+</section>
+
+<section class="dashboard-grid">
+    <div class="panel">
+        <h3>Game Projection</h3>
+        <p>{{ result.home_team }} projected score: <b>{{ result.home_score }}</b></p>
+        <p>{{ result.away_team }} projected score: <b>{{ result.away_score }}</b></p>
+        <p>{{ result.home_team }} win probability: <b>{{ result.home_win }}%</b></p>
+        <p>{{ result.away_team }} win probability: <b>{{ result.away_win }}%</b></p>
+    </div>
+
+    <div class="panel">
+        <h3>Top Anytime TD</h3>
+        <ol class="leader-list">
+        {% for p in result.best_td %}
+            <li><span>{{ p.name }}</span><b>{{ p.td_chance }}%</b></li>
+        {% endfor %}
+        </ol>
+    </div>
+</section>
+{% endblock %}

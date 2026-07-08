@@ -1,0 +1,31 @@
+# Props Rows Fix
+
+The TD columns appeared, but the rows disappeared because the template was too strict about field names.
+
+This update fixes `templates/props.html` so it supports:
+
+- `p.position` or `p.pos`
+- `p.market` or `p.prop`
+- `p.projection`, `p.bushmaster_proj`, or `p.proj`
+- `p.confidence` or `p.confidence_stars`
+
+It also adds:
+
+```text
+/props-debug
+```
+
+Use that page if rows still do not show. It prints the raw `result.props` data so we can see the actual keys.
+
+## Test
+
+```bash
+python app.py
+```
+
+Open:
+
+```text
+http://127.0.0.1:5000/player-props
+http://127.0.0.1:5000/props-debug
+```

@@ -1,0 +1,140 @@
+def clamp(value, low=0.0, high=100.0):
+    return max(low, min(high, value))
+
+
+def passing_td_percentage(position, role, team_points=21.0, pass_volume=32.0, red_zone_share=0.10):
+    position = (position or "").upper()
+    role = role or "unknown"
+
+    if position != "QB":
+        return 0.0
+
+    if role in {"reserve_qb", "inactive"}:
+        return 0.0
+
+    if role == "backup_qb":
+        return 1.0
+
+    pct = 28.0
+    pct += max(0, team_points - 21.0) * 1.6
+    pct += max(0, pass_volume - 30.0) * 0.7
+    pct += red_zone_share * 18.0
+
+    return round(clamp(pct, 4.0, 82.0), 1)
+
+
+def rushing_td_percentage(position, role, team_points=21.0, carries=0.0, red_zone_share=0.10):
+    position = (position or "").upper()
+    role = role or "unknown"
+
+    if role in {"reserve_qb", "inactive"}:
+        return 0.0
+
+    if role == "backup_qb":
+        return 0.5
+
+    if position == "QB":
+        pct = 8.0
+        pct += max(0, carries - 4.0) * 2.0
+        pct += red_zone_share * 22.0
+        pct += max(0, team_points - 21.0) * 0.7
+        return round(clamp(pct, 1.0, 45.0), 1)
+
+    if position == "RB":
+        pct = 18.0
+        pct += max(0, carries - 10.0) * 1.7
+        pct += red_zone_share * 36.0
+        pct += max(0, team_points - 21.0) * 0.9
+
+        if role == "rotation":
+            pct *= 0.65
+        elif role == "reserve":
+            pct *= 0.25
+
+        return round(clamp(pct, 1.0, 75.0), 1)
+
+    if position in {"WR", "TE"}:
+        pct = 1.5
+        pct += max(0, carries) * 1.5
+        pct += red_zone_share * 5.0
+
+        if role != "starter":
+            pct *= 0.5
+
+        return round(clamp(pct, 0.0, 18.0), 1)
+
+    return 0.0
+
+
+def receiving_td_percentage(position, role, team_points=21.0, targets=0.0, red_zone_share=0.10):
+    position = (position or "").upper()
+    role = role or "unknown"
+
+    if role in {"reserve_qb", "backup_qb", "inactive"}:
+        return 0.0
+
+    if position == "QB":
+        return 0.0
+
+    pct = {
+        "RB": 6.0,
+        "WR": 18.0,
+        "TE": 15.0,
+    }.get(position, 5.0)
+
+    pct += max(0, targets - 4.0) * 2.0
+    pct += red_zone_share * 28.0
+    pct += max(0, team_points - 21.0) * 0.7
+
+    if role == "rotation":
+        pct *= 0.75
+    elif role == "reserve":
+        pct *= 0.35
+
+    return round(clamp(pct, 0.0, 70.0), 1)
+
+
+def apply_td_percentages(player, projection, context=None):
+    context = context or {}
+
+    position = player.get("position") or projection.get("position") or ""
+    role = projection.get("role") or player.get("role") or "unknown"
+
+    team_points = float(context.get("team_points", player.get("team_points", 21.0) or 21.0))
+    red_zone_share = float(context.get("red_zone_share", player.get("red_zone_share", 0.10) or 0.10))
+    pass_volume = float(context.get("pass_attempts", player.get("pass_attempts", 32.0) or 32.0))
+    carries = float(context.get("carries", player.get("carries", player.get("rush_attempts", 0.0)) or 0.0))
+    targets = float(context.get("targets", player.get("targets", 0.0) or 0.0))
+
+    projection["passing_td_percentage"] = passing_td_percentage(
+        position=position,
+        role=role,
+        team_points=team_points,
+        pass_volume=pass_volume,
+        red_zone_share=red_zone_share,
+    )
+
+    projection["rushing_td_percentage"] = rushing_td_percentage(
+        position=position,
+        role=role,
+        team_points=team_points,
+        carries=carries,
+        red_zone_share=red_zone_share,
+    )
+
+    projection["receiving_td_percentage"] = receiving_td_percentage(
+        position=position,
+        role=role,
+        team_points=team_points,
+        targets=targets,
+        red_zone_share=red_zone_share,
+    )
+
+    # Keep old td_chance available for templates that still use it.
+    projection["td_chance"] = round(max(
+        projection["passing_td_percentage"],
+        projection["rushing_td_percentage"],
+        projection["receiving_td_percentage"],
+    ), 1)
+
+    return projection

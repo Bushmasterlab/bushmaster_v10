@@ -1,0 +1,86 @@
+# BushMaster NFL Predictor V9.3 Upgrade
+
+This is an upgrade patch for your OLD V9 app, not a full replacement.
+
+## What V9.3 fixes
+
+### 1. Backup QB problem
+Reserve quarterbacks like Tanner McKee should not get normal passing-yard projections.
+
+Rules:
+- Starter QB: 100% projection
+- QB2: 2% projection
+- QB3/reserve QB: 0% projection
+- Inactive player: 0%
+
+### 2. Adds projection range
+Adds:
+- v93_floor
+- v93_ceiling
+
+### 3. Adds better confidence
+Adds:
+- v93_confidence
+
+### 4. Adds boom/bust
+Adds:
+- v93_boom_probability
+- v93_bust_probability
+- boom_bust label
+
+### 5. Adds explanation text
+Adds:
+- v93_explanation
+
+## Files to copy into your old V9 project
+
+Copy these folders into your existing app and overwrite if asked:
+
+- services/
+- routes/
+- templates/
+- sample_data/
+
+## How to use in your current projection code
+
+Find the place where your app finishes building a projection dictionary.
+
+Add this import:
+
+```python
+from services.v93_projection_booster import upgrade_projection
+from services.depth_chart_helper import get_depth_info
+```
+
+Then after the projection is created:
+
+```python
+player_id = player.get("player_id") or player.get("id")
+depth = get_depth_info(player_id)
+
+projection = upgrade_projection(
+    player,
+    projection,
+    recent_form=recent_form,
+    depth_rank=depth.get("depth_rank"),
+    is_active=depth.get("is_active", True),
+    injury_status=projection.get("injury_status", "Healthy"),
+)
+```
+
+## Optional debug route
+
+Register this in app.py:
+
+```python
+from routes.v93_debug import bp as v93_debug_bp
+app.register_blueprint(v93_debug_bp)
+```
+
+Then test:
+
+```text
+http://127.0.0.1:5000/v93/demo
+```
+
+For Tanner McKee as QB3, passing yards should drop to 0.

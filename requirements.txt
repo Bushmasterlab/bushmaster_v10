@@ -1,0 +1,53 @@
+# All Dropdowns Update
+
+This update makes all matchup-driven pages use the same dropdowns.
+
+## What changed
+
+- Dashboard
+- Games
+- Player Props
+- QB Props
+- RB Props
+- WR Props
+- TE Props
+- Team Props
+- Betting Edges
+- Trends
+- Injuries
+- Settings
+
+All of those routes now support:
+
+- Home Team dropdown
+- Away Team dropdown
+- Stats Season dropdown
+- Run Prediction button
+
+## Files changed
+
+- `app.py`
+- `templates/layout.html`
+- `templates/index.html`
+- `templates/games.html`
+- `templates/props.html`
+- `templates/team_props.html`
+- `templates/betting_edges.html`
+- `templates/matchup_form.html`
+
+## Test
+
+```bash
+python app.py
+```
+
+Then open each page and select a different matchup.
+
+Example:
+
+```text
+http://127.0.0.1:5000/player-props
+http://127.0.0.1:5000/qb-props
+http://127.0.0.1:5000/team-props
+http://127.0.0.1:5000/betting-edges
+```
